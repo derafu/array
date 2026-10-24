@@ -13,17 +13,18 @@ declare(strict_types=1);
 namespace Derafu\TestsArray;
 
 use ArrayObject;
+use Derafu\Array\ArrayPath;
 use Derafu\Array\ArrayReader;
-use Derafu\Array\ArrayType;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
+use Derafu\Value\ValueType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
+#[UsesClass(ArrayPath::class)]
 #[CoversClass(ArrayReader::class)]
-#[UsesClass(ArrayType::class)]
 final class ArrayReaderCollectionsTest extends TestCase
 {
     public function testFromValuePreservesArrayKeysTypesAndSnapshots(): void
@@ -95,9 +96,9 @@ final class ArrayReaderCollectionsTest extends TestCase
         $this->assertFalse($reader->getBool(4));
         $this->assertFalse($reader->requireBool(4));
         $this->assertSame(['admin'], $reader->requireStringList(5));
-        $this->assertSame(['id' => 9], $reader->requireMapOf(6, ArrayType::int()));
-        $this->assertSame(42, $reader->get(2, ArrayType::int()));
-        $this->assertSame(42, $reader->require(2, ArrayType::int()));
+        $this->assertSame(['id' => 9], $reader->requireMapOf(6, ValueType::int()));
+        $this->assertSame(42, $reader->get(2, ValueType::int()));
+        $this->assertSame(42, $reader->require(2, ValueType::int()));
         $this->assertSame('default', $reader->getString(99, 'default'));
     }
 
@@ -255,7 +256,7 @@ final class ArrayReaderCollectionsTest extends TestCase
         $this->assertSame('Alice', $reader->requireReader('row')->requireString(0));
 
         $this->expectException(TranslatableInvalidArgumentException::class);
-        $this->expectExceptionMessage('The key "row" must be of type object, array given.');
+        $this->expectExceptionMessage('The key "row" must be of type map, array given.');
 
         $reader->requireMap('row');
     }

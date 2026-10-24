@@ -15,8 +15,8 @@ namespace Derafu\TestsArray;
 use Derafu\Array\ArrayPath;
 use Derafu\Array\ArrayReader;
 use Derafu\Array\ArrayTable;
-use Derafu\Array\ArrayType;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
+use Derafu\Value\ValueType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -24,35 +24,34 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ArrayPath::class)]
 #[CoversClass(ArrayReader::class)]
 #[CoversClass(ArrayTable::class)]
-#[CoversClass(ArrayType::class)]
 final class ArrayContractsTest extends TestCase
 {
     public function testTypedArraysPreserveMixedKeysAndNestedValues(): void
     {
         $values = [4 => ['a', 'b'], 'other' => [], 9 => ['c']];
         $reader = ArrayReader::fromArray(['values' => $values], 'settings.php');
-        $item = ArrayType::listOf(ArrayType::string());
+        $item = ValueType::listOf(ValueType::string());
 
         $this->assertSame($values, $reader->getArrayOf('values', $item));
         $this->assertSame($values, $reader->requireArrayOf('values', $item));
-        $this->assertSame('array<list<string>>', ArrayType::arrayOf($item)->name);
+        $this->assertSame('array<list<string>>', ValueType::arrayOf($item)->name);
     }
 
     public function testTypedArraysAcceptListsMapsAndEmptyArrays(): void
     {
-        $type = ArrayType::arrayOf(ArrayType::int());
+        $type = ValueType::arrayOf(ValueType::int());
         foreach ([[], [1, 2], ['a' => 1], [8 => 1, 'a' => 2]] as $values) {
             $reader = ArrayReader::fromArray(['values' => $values]);
             $this->assertSame($values, $type->parse($values));
-            $this->assertSame($values, $reader->getArrayOf('values', ArrayType::int()));
-            $this->assertSame($values, $reader->requireArrayOf('values', ArrayType::int()));
+            $this->assertSame($values, $reader->getArrayOf('values', ValueType::int()));
+            $this->assertSame($values, $reader->requireArrayOf('values', ValueType::int()));
         }
     }
 
     public function testOptionalTypedArraysTreatMissingAndNullAsAbsent(): void
     {
         foreach ([[], ['values' => null]] as $data) {
-            $this->assertNull(ArrayReader::fromArray($data)->getArrayOf('values', ArrayType::int()));
+            $this->assertNull(ArrayReader::fromArray($data)->getArrayOf('values', ValueType::int()));
         }
     }
 
@@ -63,7 +62,7 @@ final class ArrayContractsTest extends TestCase
         $this->expectException(TranslatableInvalidArgumentException::class);
         $this->expectExceptionMessage('The key "values" of settings.php is required.');
 
-        $reader->requireArrayOf('values', ArrayType::int());
+        $reader->requireArrayOf('values', ValueType::int());
     }
 
     public function testRequiredTypedArrayRejectsNull(): void
@@ -73,7 +72,7 @@ final class ArrayContractsTest extends TestCase
         $this->expectException(TranslatableInvalidArgumentException::class);
         $this->expectExceptionMessage('The key "values" is required.');
 
-        $reader->requireArrayOf('values', ArrayType::int());
+        $reader->requireArrayOf('values', ValueType::int());
     }
 
     public function testTypedArrayRejectsANonArray(): void
@@ -83,7 +82,7 @@ final class ArrayContractsTest extends TestCase
         $this->expectException(TranslatableInvalidArgumentException::class);
         $this->expectExceptionMessage('The key "values" of settings.php must be of type array<int>, string given.');
 
-        $reader->getArrayOf('values', ArrayType::int());
+        $reader->getArrayOf('values', ValueType::int());
     }
 
     public function testNestedTypedArraysReportTheFullPathOfAnInvalidValue(): void
@@ -93,7 +92,7 @@ final class ArrayContractsTest extends TestCase
         $this->expectException(TranslatableInvalidArgumentException::class);
         $this->expectExceptionMessage('The key "groups.first.7" of settings.php must be of type int, string given.');
 
-        $reader->requireMapOf('groups', ArrayType::arrayOf(ArrayType::int()));
+        $reader->requireMapOf('groups', ValueType::arrayOf(ValueType::int()));
     }
 
     /**
@@ -113,12 +112,12 @@ final class ArrayContractsTest extends TestCase
     #[DataProvider('invalidMapKeys')]
     public function testMapsRejectEveryIntegerKey(array $values): void
     {
-        foreach ([ArrayType::map(), ArrayType::mapOf(ArrayType::int())] as $type) {
+        foreach ([ValueType::map(), ValueType::mapOf(ValueType::int())] as $type) {
             try {
                 $type->parse($values, 'values');
                 $this->fail('A map must reject integer keys.');
             } catch (TranslatableInvalidArgumentException $exception) {
-                $this->assertStringContainsString('The key "values" must be of type ' . $type->name, $exception->getMessage());
+                $this->assertStringContainsString('The value at "values" must be of type ' . $type->name, $exception->getMessage());
             }
         }
     }
@@ -129,8 +128,8 @@ final class ArrayContractsTest extends TestCase
         $reader = ArrayReader::fromArray(['values' => $values]);
 
         $this->assertSame($values, $reader->requireMap('values'));
-        $this->assertSame($values, $reader->requireMapOf('values', ArrayType::int()));
-        $this->assertSame([], ArrayType::map()->parse([]));
+        $this->assertSame($values, $reader->requireMapOf('values', ValueType::int()));
+        $this->assertSame([], ValueType::map()->parse([]));
     }
 
     public function testWrappingUsesAListCheckAndKeepsTheOriginalArray(): void

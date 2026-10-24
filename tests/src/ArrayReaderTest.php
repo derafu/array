@@ -15,17 +15,18 @@ namespace Derafu\TestsArray;
 use Closure;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Derafu\Array\ArrayPath;
 use Derafu\Array\ArrayReader;
-use Derafu\Array\ArrayType;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
+use Derafu\Value\ValueType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
+#[UsesClass(ArrayPath::class)]
 #[CoversClass(ArrayReader::class)]
-#[UsesClass(ArrayType::class)]
 final class ArrayReaderTest extends TestCase
 {
     #[Test]
@@ -58,10 +59,10 @@ final class ArrayReaderTest extends TestCase
         $this->assertSame(['a', 'b'], $reader->getStringList('stringList'));
         $this->assertSame([1, 2], $reader->getIntList('intList'));
         $this->assertSame(['a', 1, true, 1.5], $reader->getScalarList('scalarList'));
-        $this->assertSame([['a' => 1], ['b' => 2]], $reader->getListOf('listOf', ArrayType::map()));
+        $this->assertSame([['a' => 1], ['b' => 2]], $reader->getListOf('listOf', ValueType::map()));
         $this->assertSame(
             ['x' => ['a'], 'y' => []],
-            $reader->getMapOf('mapOf', ArrayType::listOf(ArrayType::string()))
+            $reader->getMapOf('mapOf', ValueType::listOf(ValueType::string()))
         );
     }
 
@@ -82,8 +83,8 @@ final class ArrayReaderTest extends TestCase
             'stringList' => [fn (ArrayReader $r) => $r->getStringList('k')],
             'intList' => [fn (ArrayReader $r) => $r->getIntList('k')],
             'scalarList' => [fn (ArrayReader $r) => $r->getScalarList('k')],
-            'listOf' => [fn (ArrayReader $r) => $r->getListOf('k', ArrayType::string())],
-            'mapOf' => [fn (ArrayReader $r) => $r->getMapOf('k', ArrayType::string())],
+            'listOf' => [fn (ArrayReader $r) => $r->getListOf('k', ValueType::string())],
+            'mapOf' => [fn (ArrayReader $r) => $r->getMapOf('k', ValueType::string())],
             'reader' => [fn (ArrayReader $r) => $r->getReader('k')],
         ];
     }
@@ -123,7 +124,7 @@ final class ArrayReaderTest extends TestCase
         $this->assertSame(0.5, $reader->getFloat('missing', 0.5));
         $this->assertSame(2, $reader->getNumber('missing', 2));
         $this->assertTrue($reader->getBool('missing', true));
-        $this->assertSame('fallback', $reader->get('missing', ArrayType::int(), 'fallback'));
+        $this->assertSame('fallback', $reader->get('missing', ValueType::int(), 'fallback'));
     }
 
     #[Test]
@@ -152,17 +153,17 @@ final class ArrayReaderTest extends TestCase
     {
         $reader = ArrayReader::fromArray(['type' => 'string', 'bad' => 1]);
 
-        $this->assertSame('string', $reader->require('type', ArrayType::string()));
+        $this->assertSame('string', $reader->require('type', ValueType::string()));
 
         try {
-            $reader->require('missing', ArrayType::string());
+            $reader->require('missing', ValueType::string());
             $this->fail('A key that is not there should be an error.');
         } catch (TranslatableInvalidArgumentException $e) {
             $this->assertSame('The key "missing" is required.', $e->getMessage());
         }
 
         $this->expectExceptionMessage('The key "bad" must be of type string, int given.');
-        $reader->require('bad', ArrayType::string());
+        $reader->require('bad', ValueType::string());
     }
 
     #[Test]
@@ -186,7 +187,7 @@ final class ArrayReaderTest extends TestCase
         }
 
         try {
-            $options->require('missing', ArrayType::int());
+            $options->require('missing', ValueType::int());
             $this->fail('A key that is not there should be an error.');
         } catch (TranslatableInvalidArgumentException $e) {
             $this->assertSame('The key "options.missing" is required.', $e->getMessage());
@@ -199,7 +200,7 @@ final class ArrayReaderTest extends TestCase
         $reader = ArrayReader::fromArray(['dependentRequired' => ['a' => ['x', 2]]]);
 
         $this->expectExceptionMessage('The key "dependentRequired.a.1" must be of type string, int given.');
-        $reader->getMapOf('dependentRequired', ArrayType::listOf(ArrayType::string()));
+        $reader->getMapOf('dependentRequired', ValueType::listOf(ValueType::string()));
     }
 
     #[Test]
@@ -316,7 +317,7 @@ final class ArrayReaderTest extends TestCase
 
         $checks = [
             fn () => $reader->getString('title'),
-            fn () => $reader->require('missing', ArrayType::string()),
+            fn () => $reader->require('missing', ValueType::string()),
             fn () => $reader->getReader('meta')?->getInt('count'),
             fn () => $items[0]->getInt('id'),
         ];
@@ -355,11 +356,11 @@ final class ArrayReaderTest extends TestCase
             'intList' => [fn (ArrayReader $r) => $r->requireIntList('k'), [0, 1], [0, 1], ['0']],
             'scalarList' => [fn (ArrayReader $r) => $r->requireScalarList('k'), [false, 0, 1.5, 'a'], [false, 0, 1.5, 'a'], [null]],
             'listOf' => [
-                fn (ArrayReader $r) => $r->requireListOf('k', ArrayType::mapOf(ArrayType::string())),
+                fn (ArrayReader $r) => $r->requireListOf('k', ValueType::mapOf(ValueType::string())),
                 [['name' => 'a']], [['name' => 'a']], [['name' => 1]],
             ],
             'mapOf' => [
-                fn (ArrayReader $r) => $r->requireMapOf('k', ArrayType::listOf(ArrayType::int())),
+                fn (ArrayReader $r) => $r->requireMapOf('k', ValueType::listOf(ValueType::int())),
                 ['ids' => [1, 2]], ['ids' => [1, 2]], ['ids' => ['1']],
             ],
             'reader' => [
@@ -438,8 +439,8 @@ final class ArrayReaderTest extends TestCase
         $this->assertSame([], $reader->requireStringList('empty'));
         $this->assertSame([], $reader->requireIntList('empty'));
         $this->assertSame([], $reader->requireScalarList('empty'));
-        $this->assertSame([], $reader->requireListOf('empty', ArrayType::string()));
-        $this->assertSame([], $reader->requireMapOf('empty', ArrayType::string()));
+        $this->assertSame([], $reader->requireListOf('empty', ValueType::string()));
+        $this->assertSame([], $reader->requireMapOf('empty', ValueType::string()));
         $this->assertSame([], $reader->requireReader('empty')->toArray());
         $this->assertSame([], $reader->requireReaders('empty'));
     }

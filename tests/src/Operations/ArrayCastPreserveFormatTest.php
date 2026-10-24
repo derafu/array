@@ -18,10 +18,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * With `preserveFormat` a numeric text becomes a number only if it is written
- * the way that the number is (the zeros at the end of the decimals do not count):
- * the others stay as the text, because the number would not keep how it was
- * written.
+ * Numeric format preservation follows ValueParser's complete spelling check.
  */
 #[CoversClass(ArrayCaster::class)]
 final class ArrayCastPreserveFormatTest extends TestCase
@@ -39,18 +36,15 @@ final class ArrayCastPreserveFormatTest extends TestCase
             'decimal' => ['42.42', 42.42],
             'negative decimal' => ['-42.42', -42.42],
             'decimal that is less than one' => ['0.5', 0.5],
-            'decimal with a zero at the end' => ['19.90', 19.9],
-            'decimal with zeros at the end' => ['1.500', 1.5],
-            'whole number with decimals' => ['1.0', 1.0],
-            'zero with decimals' => ['0.00', 0.0],
         ];
     }
 
     #[DataProvider('numbersProvider')]
     public function testATextThatIsWrittenLikeItsNumberBecomesIt(string $text, mixed $expected): void
     {
-        $this->assertSame($expected, ArrayCaster::cast(['value' => $text], preserveFormat: true)['value']);
-        $this->assertSame($expected, ArrayCaster::cast(['value' => '  ' . $text . ' '], preserveFormat: true)['value'], 'It is trimmed first.');
+        $this->assertSame($expected, ArrayCaster::cast(['value' => $text], preserveNumericFormat: true)['value']);
+        $padded = '  ' . $text . ' ';
+        $this->assertSame($padded, ArrayCaster::cast(['value' => $padded], preserveNumericFormat: true)['value']);
     }
 
     /**
@@ -59,6 +53,10 @@ final class ArrayCastPreserveFormatTest extends TestCase
     public static function textsProvider(): array
     {
         return [
+            'decimal with a zero at the end' => ['19.90'],
+            'decimal with zeros at the end' => ['1.500'],
+            'whole number with decimals' => ['1.0'],
+            'zero with decimals' => ['0.00'],
             'zeros at the beginning' => ['007'],
             'zeros at the beginning of a decimal' => ['007.5'],
             'only zeros' => ['00'],
@@ -78,8 +76,9 @@ final class ArrayCastPreserveFormatTest extends TestCase
     #[DataProvider('textsProvider')]
     public function testATextThatIsNotWrittenLikeItsNumberStaysAsTheText(string $text): void
     {
-        $this->assertSame($text, ArrayCaster::cast(['value' => $text], preserveFormat: true)['value']);
-        $this->assertSame($text, ArrayCaster::cast(['value' => ' ' . $text . "\n"], preserveFormat: true)['value'], 'It is trimmed.');
+        $this->assertSame($text, ArrayCaster::cast(['value' => $text], preserveNumericFormat: true)['value']);
+        $padded = ' ' . $text . "\n";
+        $this->assertSame($padded, ArrayCaster::cast(['value' => $padded], preserveNumericFormat: true)['value']);
     }
 
     public function testWhatIsNotANumericTextIsAsWithoutTheOption(): void
@@ -87,8 +86,8 @@ final class ArrayCastPreserveFormatTest extends TestCase
         $array = ['a' => ' x ', 'b' => '', 'c' => ['d' => true, 'e' => 5, 'f' => null, 'g' => '12abc']];
 
         $this->assertSame(
-            ['a' => 'x', 'b' => null, 'c' => ['d' => true, 'e' => 5, 'f' => null, 'g' => '12abc']],
-            ArrayCaster::cast($array, null, preserveFormat: true)
+            ['a' => ' x ', 'b' => false, 'c' => ['d' => true, 'e' => 5, 'f' => null, 'g' => '12abc']],
+            ArrayCaster::cast($array, preserveNumericFormat: true)
         );
     }
 

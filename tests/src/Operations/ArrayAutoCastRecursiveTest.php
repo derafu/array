@@ -43,42 +43,37 @@ class ArrayAutoCastRecursiveTest extends TestCase
             'floatString' => 42.42,
             'negativeIntegerString' => -42,
             'negativeFloatString' => -42.42,
-            'emptyString' => null, // Default empty value for test.
+            'emptyString' => false,
             'stringWithSpaces' => 123, // Trimmed and casted to int.
             'nonNumericString' => 'hello', // Remains unchanged.
             'arrayWithMixedValues' => [
                 'nestedIntegerString' => 10,
                 'nestedFloatString' => 10.10,
-                'nestedEmptyString' => null, // Default empty value for test.
+                'nestedEmptyString' => false,
                 'nestedNonNumericString' => 'world', // Remains unchanged.
             ],
             'nonStringValue' => true, // Remains unchanged.
         ];
 
-        $result = ArrayCaster::cast($array, null);
+        $result = ArrayCaster::cast($array);
 
         $this->assertSame($expected, $result, 'The array was not transformed as expected.');
     }
 
-    public function testAutoCastRecursiveWithCustomEmptyValue(): void
+    public function testAutoCastRecursiveUsesParserLiteralsAndBlankText(): void
     {
         $array = [
             'emptyString' => '',
-            'nestedArray' => [
-                'nestedEmptyString' => '',
-            ],
+            'emptyLiteral' => 'empty',
+            'nullLiteral' => '(null)',
+            'nestedArray' => ['whitespace' => '   ', 'falseLiteral' => 'false'],
         ];
-
-        $expected = [
-            'emptyString' => 'customValue',
-            'nestedArray' => [
-                'nestedEmptyString' => 'customValue',
-            ],
-        ];
-
-        $result = ArrayCaster::cast($array, 'customValue');
-
-        $this->assertSame($expected, $result, 'The custom empty value was not applied correctly.');
+        $this->assertSame([
+            'emptyString' => false,
+            'emptyLiteral' => '',
+            'nullLiteral' => null,
+            'nestedArray' => ['whitespace' => false, 'falseLiteral' => false],
+        ], ArrayCaster::cast($array));
     }
 
     public function testAutoCastRecursiveNoCastsUnnecessaryValues(): void

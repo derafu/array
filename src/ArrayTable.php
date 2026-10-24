@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Array;
 
-use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Derafu\Array\Exception\ArrayException;
 
 /**
  * Transforms columns, pairs and keyed rows.
@@ -104,7 +104,7 @@ final class ArrayTable
      *
      * @param array<array-key, mixed> $table The table to convert, where each row has exactly 2 columns.
      * @return array<array-key, mixed> The resulting associative array.
-     * @throws InvalidArgumentException If any row doesn't have exactly 2 columns
+     * @throws ArrayException If any row doesn't have exactly 2 columns
      * or its first column can not be a key.
      */
     public static function pairsToMap(array $table): array
@@ -112,14 +112,14 @@ final class ArrayTable
         $result = [];
         foreach ($table as $index => $row) {
             if (!is_array($row) || count($row) !== 2) {
-                throw new InvalidArgumentException([
+                throw new ArrayException([
                     'Row {index} must have exactly 2 columns.',
                     'index' => $index,
                 ]);
             }
             $key = array_shift($row);
             if (!is_scalar($key) && $key !== null) {
-                throw new InvalidArgumentException([
+                throw new ArrayException([
                     'The first column of row {index} must be a scalar or null to be a key.',
                     'index' => $index,
                 ]);

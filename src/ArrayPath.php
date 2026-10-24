@@ -74,12 +74,17 @@ final class ArrayPath
      *
      * @param array<array-key, mixed> $array The array.
      * @param string|non-empty-list<string> $path Dot notation path ("a.b.c") or
-     * the list of keys.
+     * the list of keys. A string matching a literal key takes precedence over
+     * dot notation; a list of keys always follows the explicit path.
      * @param mixed $default What is returned if the path does not exist.
      * @return mixed The value at the path, or the default.
      */
     public static function get(array $array, string|array $path, mixed $default = null): mixed
     {
+        if (is_string($path) && array_key_exists($path, $array)) {
+            return $array[$path];
+        }
+
         $keys = is_string($path) ? explode('.', $path) : $path;
         $current = $array;
 
@@ -96,6 +101,8 @@ final class ArrayPath
 
     /**
      * Sets a value in an array, at a path of keys, creating the levels.
+     * An existing literal string key takes precedence over dot notation;
+     * otherwise, dot notation creates the nested path.
      *
      * The array is not modified: the array with the value set is returned. A
      * level of the path that exists and is not an array is replaced by an
@@ -109,6 +116,10 @@ final class ArrayPath
      */
     public static function set(array $array, string|array $path, mixed $value): array
     {
+        if (is_string($path) && array_key_exists($path, $array)) {
+            $path = [$path];
+        }
+
         $keys = is_string($path) ? explode('.', $path) : $path;
         $key = $keys[0];
         $rest = array_slice($keys, 1);
@@ -127,6 +138,7 @@ final class ArrayPath
 
     /**
      * Wraps in an array the value at a path of keys, if it is not a list.
+     * An existing literal string key takes precedence over dot notation.
      *
      * The array is not modified: the array with the value wrapped is returned.
      * If any key of the path does not exist, or a level of the path is not an
@@ -139,6 +151,10 @@ final class ArrayPath
      */
     public static function wrap(array $array, string|array $path): array
     {
+        if (is_string($path) && array_key_exists($path, $array)) {
+            $path = [$path];
+        }
+
         $keys = is_string($path) ? explode('.', $path) : $path;
         $key = $keys[0];
         if (!isset($array[$key])) {

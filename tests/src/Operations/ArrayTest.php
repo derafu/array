@@ -37,10 +37,9 @@ class ArrayTest extends TestCase
     #[DataProvider('provideAutoCastData')]
     public function shouldAutoCastArrayValues(
         array $input,
-        mixed $emptyValue,
         array $expected
     ): void {
-        $result = ArrayCaster::cast($input, $emptyValue);
+        $result = ArrayCaster::cast($input);
         $this->assertSame($expected, $result);
     }
 
@@ -52,23 +51,19 @@ class ArrayTest extends TestCase
         return [
             'simple types' => [
                 ['1', '2.5', 'text', ''],
-                null,
-                [1, 2.5, 'text', null],
+                [1, 2.5, 'text', false],
             ],
             'nested arrays' => [
                 ['a' => ['1', '2.5'], 'b' => ['text', '']],
-                '',
-                ['a' => [1, 2.5], 'b' => ['text', '']],
+                ['a' => [1, 2.5], 'b' => ['text', false]],
             ],
-            'custom empty value' => [
-                ['1', '', '2', ''],
-                'EMPTY',
-                [1, 'EMPTY', 2, 'EMPTY'],
+            'special literals and empty text' => [
+                ['1', '', '2', 'empty', 'null'],
+                [1, false, 2, '', null],
             ],
-            'trim values' => [
+            'whitespace retained unless interpreted' => [
                 [' 1 ', ' text '],
-                null,
-                [1, 'text'],
+                [1, ' text '],
             ],
         ];
     }

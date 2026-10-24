@@ -18,9 +18,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A numeric text becomes the number that it says, or it stays as the text: a
- * value that is not the one of the text (it overflows, it is not finite, it
- * loses digits) is never given.
+ * Recursive numeric interpretation follows ValueParser's defaults and options.
  */
 #[CoversClass(ArrayCaster::class)]
 final class ArrayCastNumericTest extends TestCase
@@ -41,16 +39,16 @@ final class ArrayCastNumericTest extends TestCase
             'decimal that has the digits of its float' => ['0.30000000000000004', 0.30000000000000004],
             'exponent that is an integer' => ['1e3', 1000],
             'exponent with a capital' => ['1E3', 1000],
-            'exponent with a decimal' => ['1.5e3', 1500.0],
+            'exponent with a decimal' => ['1.5e3', 1500],
             'exponent that is negative' => ['1e-2', 0.01],
             'exponent that is negative with a decimal' => ['2.5e-3', 0.0025],
             'exponent that is greater than the integers' => ['1e25', 1.0E+25],
             'sign of plus' => ['+5', 5],
             'point at the beginning' => ['.5', 0.5],
-            'point at the end' => ['1.', 1.0],
-            'zero with decimals' => ['0.0', 0.0],
-            'negative zero with decimals' => ['-0.0', -0.0],
-            'whole number with decimals' => ['1.0', 1.0],
+            'point at the end' => ['1.', 1],
+            'zero with decimals' => ['0.0', 0],
+            'negative zero with decimals' => ['-0.0', 0],
+            'whole number with decimals' => ['1.0', 1],
         ];
     }
 
@@ -82,9 +80,10 @@ final class ArrayCastNumericTest extends TestCase
     }
 
     #[DataProvider('textsProvider')]
-    public function testANumericTextThatWouldNotBeItsValueStaysAsText(string $text): void
+    public function testPrecisionOptionRetainsUnsafeNumericText(string $text): void
     {
-        $this->assertSame($text, ArrayCaster::cast(['value' => $text])['value']);
-        $this->assertSame($text, ArrayCaster::cast(['value' => '  ' . $text . "\t"])['value'], 'It is trimmed too.');
+        $this->assertSame($text, ArrayCaster::cast(['value' => $text], preserveNumericPrecision: true)['value']);
+        $padded = '  ' . $text . "\t";
+        $this->assertSame($padded, ArrayCaster::cast(['value' => $padded], preserveNumericPrecision: true)['value']);
     }
 }
