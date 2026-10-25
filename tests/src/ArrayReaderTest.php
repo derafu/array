@@ -12,11 +12,15 @@ declare(strict_types=1);
 
 namespace Derafu\TestsArray;
 
+use ArrayObject;
 use Closure;
+use Countable;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Derafu\Array\ArrayPath;
 use Derafu\Array\ArrayReader;
+use Derafu\Array\Exception\MissingValueException;
+use Derafu\Array\Exception\TypeMismatchException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use Derafu\Value\ValueType;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -467,5 +471,36 @@ final class ArrayReaderTest extends TestCase
 
         $this->assertSame($date, $reader->requireDateTime('date'));
         $this->assertSame(1768435200, $reader->requireDateTime('timestamp')->getTimestamp());
+    }
+
+    #[Test]
+    public function shouldReadObjectsOfAClassOrAnInterface(): void
+    {
+        $object = new ArrayObject([1]);
+        $reader = ArrayReader::fromArray(['a' => ['pool' => $object]], 'config');
+
+        $this->assertSame($object, $reader->getObject('a.pool', ArrayObject::class));
+        $this->assertSame($object, $reader->getObject('a.pool', Countable::class));
+        $this->assertSame($object, $reader->requireObject('a.pool', ArrayObject::class));
+        $this->assertNull($reader->getObject('a.other', ArrayObject::class));
+    }
+
+    #[Test]
+    public function shouldRejectMissingAndWrongObjects(): void
+    {
+        $reader = ArrayReader::fromArray(['a' => ['pool' => 'x']], 'config');
+
+        try {
+            $reader->getObject('a.pool', ArrayObject::class);
+            $this->fail('A string is not an object.');
+        } catch (TypeMismatchException $exception) {
+            $this->assertSame(
+                'The key "a.pool" of config must be of type ArrayObject, string given.',
+                $exception->getMessage()
+            );
+        }
+
+        $this->expectException(MissingValueException::class);
+        $reader->requireObject('a.other', ArrayObject::class);
     }
 }

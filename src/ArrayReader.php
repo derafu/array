@@ -402,6 +402,19 @@ final readonly class ArrayReader
     }
 
     /**
+     * Reads an instance of a class or interface.
+     *
+     * @template T of object
+     * @param class-string<T> $class
+     * @return T|null
+     * @throws ArrayException If the value is not an instance of the class.
+     */
+    public function getObject(int|string $key, string $class): ?object
+    {
+        return $this->get($key, ValueType::instanceOf($class));
+    }
+
+    /**
      * Reads a string that is not empty, nor only spaces.
      *
      * @return non-empty-string|null
@@ -550,6 +563,19 @@ final readonly class ArrayReader
     public function requireBool(int|string $key): bool
     {
         return $this->require($key, ValueType::bool());
+    }
+
+    /**
+     * Reads a required instance of a class or interface (see `getObject()`).
+     *
+     * @template T of object
+     * @param class-string<T> $class
+     * @return T
+     * @throws ArrayException If the key is absent, null, or is not an instance of the class.
+     */
+    public function requireObject(int|string $key, string $class): object
+    {
+        return $this->require($key, ValueType::instanceOf($class));
     }
 
     /**
