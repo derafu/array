@@ -161,11 +161,12 @@ final readonly class ArrayReader
      * Reads a key that is an array as another reader, which reports its
      * errors with the full path.
      *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of the selected array.
      * @throws ArrayException If the value is not an array.
      */
-    public function getReader(int|string $key): ?self
+    public function getReader(int|string $key, ?ValueType $type = null): ?self
     {
-        $value = $this->get($key, ValueType::array());
+        $value = $this->get($key, $type ?? ValueType::array());
 
         return $value === null
             ? null
@@ -176,12 +177,13 @@ final readonly class ArrayReader
      * Reads a key that is a list of arrays as a list of readers, each one
      * reporting its errors with the path of its position (`parameters.2.name`).
      *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the list.
      * @return list<self>|null
      * @throws ArrayException If the value is not a list of arrays.
      */
-    public function getReaders(int|string $key): ?array
+    public function getReaders(int|string $key, ?ValueType $type = null): ?array
     {
-        $items = $this->get($key, ValueType::listOf(ValueType::array()));
+        $items = $this->get($key, ValueType::listOf($type ?? ValueType::array()));
 
         if ($items === null) {
             return null;
@@ -694,11 +696,12 @@ final readonly class ArrayReader
     /**
      * Reads a required array as a reader, preserving its path and source.
      *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of the selected array.
      * @throws ArrayException If the key is absent, null, or is not an array.
      */
-    public function requireReader(int|string $key): self
+    public function requireReader(int|string $key, ?ValueType $type = null): self
     {
-        $value = $this->require($key, ValueType::array());
+        $value = $this->require($key, $type ?? ValueType::array());
 
         return new self($value, ValueType::path($this->path, $key), $this->source);
     }
@@ -706,12 +709,13 @@ final readonly class ArrayReader
     /**
      * Reads a required list of arrays as readers, preserving their paths and source.
      *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the list.
      * @return list<self>
      * @throws ArrayException If the key is absent, null, or is not a list of arrays.
      */
-    public function requireReaders(int|string $key): array
+    public function requireReaders(int|string $key, ?ValueType $type = null): array
     {
-        $items = $this->require($key, ValueType::listOf(ValueType::array()));
+        $items = $this->require($key, ValueType::listOf($type ?? ValueType::array()));
         $path = ValueType::path($this->path, $key);
 
         return array_map(
@@ -750,12 +754,13 @@ final readonly class ArrayReader
     /**
      * Reads an array of arrays as readers, preserving every key and error path.
      *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the collection.
      * @return array<array-key, self>|null
      * @throws ArrayException If the value is not an array of arrays.
      */
-    public function getArrayReaders(int|string $key): ?array
+    public function getArrayReaders(int|string $key, ?ValueType $type = null): ?array
     {
-        $items = $this->getArrayOf($key, ValueType::array());
+        $items = $this->getArrayOf($key, $type ?? ValueType::array());
 
         return $items === null ? null : $this->createArrayReaders($items, $key);
     }
@@ -763,12 +768,13 @@ final readonly class ArrayReader
     /**
      * Reads a required array of arrays as readers, preserving keys and paths.
      *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the collection.
      * @return array<array-key, self>
      * @throws ArrayException If the key is absent, null, or is not an array of arrays.
      */
-    public function requireArrayReaders(int|string $key): array
+    public function requireArrayReaders(int|string $key, ?ValueType $type = null): array
     {
-        return $this->createArrayReaders($this->requireArrayOf($key, ValueType::array()), $key);
+        return $this->createArrayReaders($this->requireArrayOf($key, $type ?? ValueType::array()), $key);
     }
 
     /**
