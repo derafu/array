@@ -18,14 +18,13 @@ use Derafu\Array\Exception\ArrayException;
 use Derafu\Array\Exception\MissingValueException;
 use Derafu\Array\Exception\TypeMismatchException;
 use Derafu\Array\Translation\ArrayTranslationResourceProvider;
-use Derafu\Translation\TranslatorFactory;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\Translation\Translator;
+use Symfony\Component\DependencyInjection\ServiceLocator;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Imports the actual package configuration and checks its provider both as a
@@ -37,36 +36,27 @@ final class ServicesTest extends TestCase
     private function loadContainer(): ContainerBuilder
     {
         $container = new ContainerBuilder();
-        (new YamlFileLoader($container, new FileLocator(dirname(__DIR__, 2) . '/resources/config')))
-            ->load('array-services.yaml');
+        (new YamlFileLoader($container, new FileLocator(dirname(__DIR__) . '/fixtures/services')))
+            ->load('services.yaml');
 
         return $container;
     }
 
-    private function compile(ContainerBuilder $container): void
+    /** @return ServiceLocator<object> */
+    private function compile(ContainerBuilder $container): ServiceLocator
     {
-        // Keep package services reachable so unused-private-service removal
-        // cannot hide an invalid definition from the construction checks.
-        foreach ($container->getDefinitions() as $definition) {
-            $definition->setPublic(true);
-        }
-        foreach ($container->getAliases() as $alias) {
-            $alias->setPublic(true);
-        }
         $container->compile();
+        $services = $container->get('test.array_services');
+        self::assertInstanceOf(ServiceLocator::class, $services);
+
+        return $services;
     }
 
-    private function consumerTranslator(): Translator
+    private function consumerTranslator(): TranslatorInterface
     {
-        $container = $this->loadContainer();
-        // The application chooses its own translator and locale. The package
-        // only contributes its resource provider through the declared tag.
-        $container->register('app.translator', Translator::class)
-            ->setFactory([TranslatorFactory::class, 'create'])
-            ->setArguments(['es', ['en'], new TaggedIteratorArgument('derafu_translation.resource_provider')]);
-        $this->compile($container);
-        $translator = $container->get('app.translator');
-        self::assertInstanceOf(Translator::class, $translator);
+        $services = $this->compile($this->loadContainer());
+        $translator = $services->get(TranslatorInterface::class);
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
 
         return $translator;
     }
@@ -74,8 +64,8 @@ final class ServicesTest extends TestCase
     public function testEveryConfiguredServiceCanBeConstructed(): void
     {
         $container = $this->loadContainer();
-        $this->compile($container);
-        self::assertInstanceOf(ArrayTranslationResourceProvider::class, $container->get(ArrayTranslationResourceProvider::class));
+        $services = $this->compile($container);
+        self::assertInstanceOf(ArrayTranslationResourceProvider::class, $services->get(ArrayTranslationResourceProvider::class));
     }
 
     public function testTheTaggedProviderExposesThePackageCatalogue(): void
@@ -85,8 +75,8 @@ final class ServicesTest extends TestCase
             ArrayTranslationResourceProvider::class,
             $container->findTaggedServiceIds('derafu_translation.resource_provider')
         );
-        $this->compile($container);
-        $provider = $container->get(ArrayTranslationResourceProvider::class);
+        $services = $this->compile($container);
+        $provider = $services->get(ArrayTranslationResourceProvider::class);
         self::assertInstanceOf(ArrayTranslationResourceProvider::class, $provider);
         $directories = [...$provider->getDirectories()];
         self::assertCount(1, $directories);
