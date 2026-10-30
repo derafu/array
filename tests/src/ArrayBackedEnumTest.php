@@ -156,6 +156,53 @@ final class ArrayBackedEnumTest extends TestCase
         $reader->require('status', ValueType::backedEnum(TextStatus::class)->nullable());
     }
 
+    public function testEnumReadersResolveCasesAndBackingValues(): void
+    {
+        $reader = ArrayReader::fromArray([
+            'text' => 'approved',
+            'number' => 0,
+            'case' => TextStatus::Pending,
+            'null' => null,
+        ]);
+
+        $this->assertSame(TextStatus::Approved, $reader->getEnum('text', TextStatus::class));
+        $this->assertSame(NumberStatus::Pending, $reader->getEnum('number', NumberStatus::class));
+        $this->assertSame(TextStatus::Pending, $reader->requireEnum('case', TextStatus::class));
+        $this->assertNull($reader->getEnum('missing', TextStatus::class));
+        $this->assertNull($reader->getEnum('null', TextStatus::class));
+    }
+
+    public function testEnumReadersRejectUnknownValuesWithTheirPathAndSource(): void
+    {
+        $reader = ArrayReader::fromValue(['status' => 'rejected'], source: 'order.json', path: 'payload');
+
+        foreach (['getEnum', 'requireEnum'] as $method) {
+            try {
+                $reader->{$method}('status', TextStatus::class);
+                $this->fail('Expected an invalid enum value.');
+            } catch (TranslatableInvalidArgumentException $exception) {
+                $this->assertSame(
+                    'The key "payload.status" of order.json must be of type ' . TextStatus::class . ', string given.',
+                    $exception->getMessage()
+                );
+            }
+        }
+    }
+
+    public function testRequiredEnumRejectsMissingAndNull(): void
+    {
+        $reader = ArrayReader::fromArray(['null' => null]);
+
+        foreach (['missing', 'null'] as $key) {
+            try {
+                $reader->requireEnum($key, TextStatus::class);
+                $this->fail('Expected a missing value.');
+            } catch (TranslatableInvalidArgumentException $exception) {
+                $this->assertSame('The key "' . $key . '" is required.', $exception->getMessage());
+            }
+        }
+    }
+
     public function testTheConcreteEnumTypeIsPreservedForConsumers(): void
     {
         $type = ValueType::backedEnum(TextStatus::class);

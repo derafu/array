@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Array;
 
+use BackedEnum;
 use DateTimeInterface;
 use Derafu\Array\Exception\ArrayException;
 use Derafu\Array\Exception\MissingValueException;
@@ -242,6 +243,44 @@ final readonly class ArrayReader
     }
 
     /**
+     * Checks the whole array against a type, as `get()` does with a key.
+     *
+     * The errors say `$` for the array itself, or the path of the reader when
+     * it was made from a bigger array.
+     *
+     * @template T
+     * @param ValueType<T> $type
+     * @return T
+     * @throws ArrayException If the array is not of the type.
+     */
+    public function to(ValueType $type): mixed
+    {
+        return self::parseValue($this->data, $type, $this->path, $this->source);
+    }
+
+    /**
+     * Returns the whole array, that must have only string keys (see `getMap()`).
+     *
+     * @return array<string, mixed>
+     * @throws ArrayException If the array is not a map.
+     */
+    public function toMap(): array
+    {
+        return $this->to(ValueType::map());
+    }
+
+    /**
+     * Returns the whole array, that must be a list (see `getList()`).
+     *
+     * @return list<mixed>
+     * @throws ArrayException If the array is not a list.
+     */
+    public function toList(): array
+    {
+        return $this->to(ValueType::list());
+    }
+
+    /**
      * Reads and converts a value using ValueType::toInt().
      *
      * @param int|null $default Returned when the key is absent or null.
@@ -438,6 +477,19 @@ final readonly class ArrayReader
     }
 
     /**
+     * Reads a case of a backed enum (see `ValueType::backedEnum()`).
+     *
+     * @template E of BackedEnum
+     * @param class-string<E> $class
+     * @return E|null
+     * @throws ArrayException If the value is not a case of the enum.
+     */
+    public function getEnum(int|string $key, string $class): ?BackedEnum
+    {
+        return $this->get($key, ValueType::backedEnum($class));
+    }
+
+    /**
      * @return array<array-key, mixed>|null
      * @throws ArrayException If the value is not an array.
      */
@@ -599,6 +651,19 @@ final readonly class ArrayReader
     public function requireDateTime(int|string $key): DateTimeInterface
     {
         return $this->require($key, ValueType::dateTime());
+    }
+
+    /**
+     * Reads a required case of a backed enum (see `getEnum()`).
+     *
+     * @template E of BackedEnum
+     * @param class-string<E> $class
+     * @return E
+     * @throws ArrayException If the key is absent, null, or is not a case of the enum.
+     */
+    public function requireEnum(int|string $key, string $class): BackedEnum
+    {
+        return $this->require($key, ValueType::backedEnum($class));
     }
 
     /**
