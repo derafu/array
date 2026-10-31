@@ -91,7 +91,7 @@ final class ArrayDuplicates
         throw $paths === []
             ? new DuplicateValueException(
                 [
-                    'The item {index} is the same as the item {first}.',
+                    'The item with key {index} is the same as the item with key {first}.',
                     'index' => $duplicate['index'],
                     'first' => $duplicate['first'],
                 ],
@@ -101,11 +101,14 @@ final class ArrayDuplicates
             )
             : new DuplicateValueException(
                 [
-                    'The item {index} has the same {paths} ({values}) as the item {first}.',
+                    'The item with key {index} repeats the item with key {first} ({values}).',
                     'index' => $duplicate['index'],
                     'first' => $duplicate['first'],
-                    'paths' => implode(', ', array_map(self::pathName(...), $paths)),
-                    'values' => implode(', ', array_map(self::describe(...), $duplicate['value'])),
+                    'values' => implode(', ', array_map(
+                        static fn (int|string|array $path, mixed $value): string => self::pathName($path) . ' = ' . self::describe($value),
+                        array_values($paths),
+                        $duplicate['value']
+                    )),
                 ],
                 $duplicate['index'],
                 $duplicate['first'],
@@ -142,7 +145,7 @@ final class ArrayDuplicates
                 $signature = serialize($compared);
             } catch (Throwable $e) {
                 throw new ArrayException([
-                    'The values of the item {index} can not be compared: {reason}.',
+                    'The values of the item with key {index} can not be compared: {reason}.',
                     'index' => $index,
                     'reason' => $e->getMessage(),
                 ], previous: $e);
@@ -172,7 +175,7 @@ final class ArrayDuplicates
 
         if (!is_array($item)) {
             throw new ArrayException([
-                'The item {index} must be an array or an object to read {paths}, {given} given.',
+                'The item with key {index} must be an array or an object to read {paths}, {given} given.',
                 'index' => $index,
                 'paths' => implode(', ', array_map(self::pathName(...), $paths)),
                 'given' => get_debug_type($item),

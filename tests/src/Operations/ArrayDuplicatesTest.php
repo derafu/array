@@ -215,7 +215,7 @@ final class ArrayDuplicatesTest extends TestCase
             $this->fail('A repeated item was accepted.');
         } catch (DuplicateValueException $e) {
             $this->assertInstanceOf(TranslatableInterface::class, $e);
-            $this->assertSame('The item 3 has the same TpoDoc, NroDoc (33, 21) as the item 0.', $e->getMessage());
+            $this->assertSame('The item with key 3 repeats the item with key 0 (TpoDoc = 33, NroDoc = 21).', $e->getMessage());
             $this->assertSame(3, $e->getIndex());
             $this->assertSame(0, $e->getFirst());
             $this->assertSame([33, 21], $e->getValues());
@@ -230,7 +230,7 @@ final class ArrayDuplicatesTest extends TestCase
             ArrayDuplicates::assertUnique($items, ['a.b', ['a', 'c']]);
             $this->fail('A repeated item was accepted.');
         } catch (DuplicateValueException $e) {
-            $this->assertSame('The item 1 has the same a.b, a.c (null, true) as the item 0.', $e->getMessage());
+            $this->assertSame('The item with key 1 repeats the item with key 0 (a.b = null, a.c = true).', $e->getMessage());
         }
     }
 
@@ -240,7 +240,7 @@ final class ArrayDuplicatesTest extends TestCase
             ArrayDuplicates::assertUnique(['x', 'y', 'x']);
             $this->fail('A repeated item was accepted.');
         } catch (DuplicateValueException $e) {
-            $this->assertSame('The item 2 is the same as the item 0.', $e->getMessage());
+            $this->assertSame('The item with key 2 is the same as the item with key 0.', $e->getMessage());
             $this->assertSame(['x'], $e->getValues());
         }
     }
@@ -253,7 +253,7 @@ final class ArrayDuplicatesTest extends TestCase
             ArrayDuplicates::assertUnique($items, ['a']);
             $this->fail('A repeated item was accepted.');
         } catch (DuplicateValueException $e) {
-            $this->assertSame('The item 1 has the same a ([1,2]) as the item 0.', $e->getMessage());
+            $this->assertSame('The item with key 1 repeats the item with key 0 (a = [1,2]).', $e->getMessage());
         }
     }
 
@@ -294,7 +294,7 @@ final class ArrayDuplicatesTest extends TestCase
             $this->fail('An item that can not be read was accepted.');
         } catch (ArrayException $e) {
             $this->assertInstanceOf(TranslatableInterface::class, $e);
-            $this->assertSame('The item 1 must be an array or an object to read a, b.c, int given.', $e->getMessage());
+            $this->assertSame('The item with key 1 must be an array or an object to read a, b.c, int given.', $e->getMessage());
         }
     }
 
@@ -305,7 +305,7 @@ final class ArrayDuplicatesTest extends TestCase
             $this->fail('A value that can not be compared was accepted.');
         } catch (ArrayException $e) {
             $this->assertInstanceOf(TranslatableInterface::class, $e);
-            $this->assertStringStartsWith('The values of the item 0 can not be compared: ', $e->getMessage());
+            $this->assertStringStartsWith('The values of the item with key 0 can not be compared: ', $e->getMessage());
             $this->assertNotNull($e->getPrevious());
         }
     }
