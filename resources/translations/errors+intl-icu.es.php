@@ -23,6 +23,16 @@ return [
         'La clave "{key}" de {source} debe ser de tipo {expected}, se entregó {given}.',
     'The key "{key}" of {source} is not allowed; the allowed keys are: {allowed}.' =>
         'La clave "{key}" de {source} no está permitida; las claves permitidas son: {allowed}.',
+    'The item {index} is the same as the item {first}.' =>
+        'El elemento {index} es igual al elemento {first}.',
+    'The item {index} has the same {paths} ({values}) as the item {first}.' =>
+        'El elemento {index} tiene los mismos {paths} ({values}) que el elemento {first}.',
+    'The path {position} must be a string, an integer or a list of them, {given} given.' =>
+        'La ruta {position} debe ser un texto, un entero o una lista de ellos, se entregó {given}.',
+    'The item {index} must be an array or an object to read {paths}, {given} given.' =>
+        'El elemento {index} debe ser un arreglo o un objeto para leer {paths}, se entregó {given}.',
+    'The values of the item {index} can not be compared: {reason}.' =>
+        'Los valores del elemento {index} no se pueden comparar: {reason}.',
     'Row {index} must have exactly 2 columns.' =>
         'La fila {index} debe tener exactamente 2 columnas.',
     'The first column of row {index} must be a scalar or null to be a key.' =>
