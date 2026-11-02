@@ -66,6 +66,27 @@ final class ArrayPath
     }
 
     /**
+     * Resolves a path into the list of keys that it names.
+     *
+     * A string matching a literal key of the array takes precedence over dot
+     * notation, as a single key; otherwise the string is split by the dots. A
+     * list of keys always follows the explicit path.
+     *
+     * @param array<array-key, mixed> $array The array the path is read in.
+     * @param string|non-empty-list<string> $path Dot notation path ("a.b.c") or
+     * the list of keys.
+     * @return non-empty-list<string> The keys of the path.
+     */
+    public static function keys(array $array, string|array $path): array
+    {
+        if (is_string($path) && array_key_exists($path, $array)) {
+            return [$path];
+        }
+
+        return is_string($path) ? explode('.', $path) : $path;
+    }
+
+    /**
      * Gets the value that is in an array at a path of keys.
      *
      * A key whose value is `null` is a value that is there, and `null` is what
@@ -81,11 +102,7 @@ final class ArrayPath
      */
     public static function get(array $array, string|array $path, mixed $default = null): mixed
     {
-        if (is_string($path) && array_key_exists($path, $array)) {
-            return $array[$path];
-        }
-
-        $keys = is_string($path) ? explode('.', $path) : $path;
+        $keys = self::keys($array, $path);
         $current = $array;
 
         foreach ($keys as $key) {
@@ -116,11 +133,7 @@ final class ArrayPath
      */
     public static function set(array $array, string|array $path, mixed $value): array
     {
-        if (is_string($path) && array_key_exists($path, $array)) {
-            $path = [$path];
-        }
-
-        $keys = is_string($path) ? explode('.', $path) : $path;
+        $keys = self::keys($array, $path);
         $key = $keys[0];
         $rest = array_slice($keys, 1);
 
@@ -151,11 +164,7 @@ final class ArrayPath
      */
     public static function wrap(array $array, string|array $path): array
     {
-        if (is_string($path) && array_key_exists($path, $array)) {
-            $path = [$path];
-        }
-
-        $keys = is_string($path) ? explode('.', $path) : $path;
+        $keys = self::keys($array, $path);
         $key = $keys[0];
         if (!isset($array[$key])) {
             return $array;
