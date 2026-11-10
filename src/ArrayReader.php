@@ -270,6 +270,17 @@ final readonly class ArrayReader
     }
 
     /**
+     * Returns the whole array with integer keys, preserving gaps and order.
+     *
+     * @return array<int, mixed>
+     * @throws ArrayException If the array has a string key.
+     */
+    public function toIndexed(): array
+    {
+        return $this->to(ValueType::indexed());
+    }
+
+    /**
      * Returns the whole array, that must be a list (see `getList()`).
      *
      * @return list<mixed>
@@ -499,6 +510,33 @@ final readonly class ArrayReader
     }
 
     /**
+     * Reads an integer-keyed array, preserving its keys, order and values.
+     *
+     * Empty arrays, lists, gaps and negative keys are accepted. An absent or
+     * null value returns null; string keys are rejected without conversion.
+     *
+     * @return array<int, mixed>|null
+     * @throws ArrayException If the value is not an integer-keyed array.
+     */
+    public function getIndexed(int|string $key): ?array
+    {
+        return $this->get($key, ValueType::indexed());
+    }
+
+    /**
+     * Reads an integer-keyed array whose values are parsed by the supplied type.
+     *
+     * @template T
+     * @param ValueType<T> $item The validation or conversion type of each value.
+     * @return array<int, T>|null
+     * @throws ArrayException If the collection or a value does not match its type.
+     */
+    public function getIndexedOf(int|string $key, ValueType $item): ?array
+    {
+        return $this->get($key, ValueType::indexedOf($item));
+    }
+
+    /**
      * @return array<string, mixed>|null
      * @throws ArrayException If the value is not a map.
      */
@@ -678,6 +716,30 @@ final readonly class ArrayReader
     }
 
     /**
+     * Reads a required integer-keyed array (see getIndexed()).
+     *
+     * @return array<int, mixed>
+     * @throws ArrayException If the value is absent, null or not integer-keyed.
+     */
+    public function requireIndexed(int|string $key): array
+    {
+        return $this->require($key, ValueType::indexed());
+    }
+
+    /**
+     * Reads a required integer-keyed array with values of the supplied type.
+     *
+     * @template T
+     * @param ValueType<T> $item The validation or conversion type of each value.
+     * @return array<int, T>
+     * @throws ArrayException If the collection is absent, null or does not match its type.
+     */
+    public function requireIndexedOf(int|string $key, ValueType $item): array
+    {
+        return $this->require($key, ValueType::indexedOf($item));
+    }
+
+    /**
      * Reads a required value (see `getMap()`).
      *
      * @return array<string, mixed>
@@ -843,10 +905,40 @@ final readonly class ArrayReader
     }
 
     /**
+     * Reads an integer-keyed array of arrays as readers, preserving row keys.
+     *
+     * Child errors retain the row key, full path and source. An absent or null
+     * collection returns null. The optional type validates or converts each row.
+     *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of each row.
+     * @return array<int, self>|null
+     * @throws ArrayException If the collection or a row has an invalid type.
+     */
+    public function getIndexedReaders(int|string $key, ?ValueType $type = null): ?array
+    {
+        $items = $this->getIndexedOf($key, $type ?? ValueType::array());
+
+        return $items === null ? null : $this->createArrayReaders($items, $key);
+    }
+
+    /**
+     * Reads a required integer-keyed collection as readers (see getIndexedReaders()).
+     *
+     * @param ValueType<array<array-key, mixed>>|null $type Type of each row.
+     * @return array<int, self>
+     * @throws ArrayException If the collection is absent, null or has an invalid type.
+     */
+    public function requireIndexedReaders(int|string $key, ?ValueType $type = null): array
+    {
+        return $this->createArrayReaders($this->requireIndexedOf($key, $type ?? ValueType::array()), $key);
+    }
+
+    /**
      * Creates readers for a collection already validated by ValueType.
      *
-     * @param array<array-key, array<array-key, mixed>> $items
-     * @return array<array-key, self>
+     * @template K of array-key
+     * @param array<K, array<array-key, mixed>> $items
+     * @return array<K, self>
      */
     private function createArrayReaders(array $items, int|string $key): array
     {

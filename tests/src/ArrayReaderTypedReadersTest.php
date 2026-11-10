@@ -38,6 +38,8 @@ final class ArrayReaderTypedReadersTest extends TestCase
         yield 'requireReaders' => [fn (ArrayReader $reader, ValueType $type) => $reader->requireReaders('payload', $type), 'list', true];
         yield 'getArrayReaders' => [fn (ArrayReader $reader, ValueType $type) => $reader->getArrayReaders('payload', $type), 'keyed', false];
         yield 'requireArrayReaders' => [fn (ArrayReader $reader, ValueType $type) => $reader->requireArrayReaders('payload', $type), 'keyed', true];
+        yield 'getIndexedReaders' => [fn (ArrayReader $reader, ValueType $type) => $reader->getIndexedReaders('payload', $type), 'indexed', false];
+        yield 'requireIndexedReaders' => [fn (ArrayReader $reader, ValueType $type) => $reader->requireIndexedReaders('payload', $type), 'indexed', true];
     }
 
     /**
@@ -49,6 +51,7 @@ final class ArrayReaderTypedReadersTest extends TestCase
         return match ($kind) {
             'single' => $record,
             'list' => [$record],
+            'indexed' => [7 => $record, 11 => $record],
             default => [7 => $record, 'last' => $record],
         };
     }
@@ -157,7 +160,7 @@ final class ArrayReaderTypedReadersTest extends TestCase
             $this->assertInstanceOf(ArrayReader::class, $record);
             $this->assertSame(12, $record->requireInt('amount'));
         }
-        $this->assertSame($kind === 'keyed' ? 2 : 1, $calls);
+        $this->assertSame(in_array($kind, ['keyed', 'indexed'], true) ? 2 : 1, $calls);
         $this->assertSame(['payload' => $payload], $reader->toArray());
     }
 
