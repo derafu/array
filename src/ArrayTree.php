@@ -27,11 +27,12 @@ final class ArrayTree
      * item that does not have the field of the parent is skipped, with
      * everything below it.
      *
-     * @param array<array-key, array<array-key, mixed>> $items Array of items, by their identifier.
+     * @template K of array-key
+     * @param array<K, array<array-key, mixed>> $items Array of items, by their identifier.
      * @param string $parentField Name of the field containing the key of the parent.
      * @param string $childrenField Name of the field to store children.
      * @param mixed $parentId Value of the parent field for root level items.
-     * @return array<array-key, array<array-key, mixed>> The hierarchical tree.
+     * @return array<K, array<array-key, mixed>> The hierarchical tree.
      */
     public static function fromRows(
         array $items,

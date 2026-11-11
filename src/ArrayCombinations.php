@@ -20,9 +20,10 @@ final class ArrayCombinations
     /**
      * Generates all possible subsets of an array with a minimum length.
      *
-     * @param list<mixed> $array Input array.
+     * @template T
+     * @param list<T> $array Input array.
      * @param int $minLength Minimum length for subsets.
-     * @return list<list<mixed>> Array of all possible subsets.
+     * @return list<list<T>> Array of all possible subsets.
      */
     public static function subsets(array $array, int $minLength = 1): array
     {

@@ -51,11 +51,13 @@ use stdClass;
  *     $reader->getReaders('parameters');             // ?list<ArrayReader>
  *
  * Types are described by `ValueType` and can be composed to any depth.
+ *
+ * @template K of array-key = array-key
  */
 final readonly class ArrayReader
 {
     /**
-     * @param array<array-key, mixed> $data The array to read.
+     * @param array<K, mixed> $data The array to read.
      * @param string $path Path of the array inside a bigger one, for the errors.
      * @param string|null $source Where the array comes from (a file, a request,
      * anything that says it), for the errors.
@@ -70,8 +72,10 @@ final readonly class ArrayReader
     /**
      * Creates a reader of an array.
      *
-     * @param array<array-key, mixed> $data
+     * @template A of array-key
+     * @param array<A, mixed> $data
      * @param string|null $source Where the array comes from, for the errors.
+     * @return self<A>
      */
     public static function fromArray(array $data, ?string $source = null): self
     {
@@ -84,6 +88,7 @@ final readonly class ArrayReader
      * @param mixed $data Value that must be an array.
      * @param string|null $source Where the array comes from.
      * @param string $path Path of the value inside its source.
+     * @return self<array-key>
      * @throws ArrayException If the value is not an array.
      */
     public static function fromValue(mixed $data, ?string $source = null, string $path = ''): self
@@ -163,6 +168,7 @@ final readonly class ArrayReader
      * errors with the full path.
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of the selected array.
+     * @return self<array-key>|null
      * @throws ArrayException If the value is not an array.
      */
     public function getReader(int|string $key, ?ValueType $type = null): ?self
@@ -179,7 +185,7 @@ final readonly class ArrayReader
      * reporting its errors with the path of its position (`parameters.2.name`).
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the list.
-     * @return list<self>|null
+     * @return list<self<array-key>>|null
      * @throws ArrayException If the value is not a list of arrays.
      */
     public function getReaders(int|string $key, ?ValueType $type = null): ?array
@@ -204,7 +210,7 @@ final readonly class ArrayReader
      * them is an error, as a typo in a configuration would be ignored otherwise.
      *
      * @param int|string ...$allowed The keys that the array can have.
-     * @return self The same reader, to go on reading.
+     * @return self<K> The same reader, to go on reading.
      * @throws ArrayException If the array has another key.
      */
     public function assertOnlyKeys(int|string ...$allowed): self
@@ -235,7 +241,7 @@ final readonly class ArrayReader
     /**
      * Returns the whole array.
      *
-     * @return array<array-key, mixed>
+     * @return array<K, mixed>
      */
     public function toArray(): array
     {
@@ -824,6 +830,7 @@ final readonly class ArrayReader
      * Reads a required array as a reader, preserving its path and source.
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of the selected array.
+     * @return self<array-key>
      * @throws ArrayException If the key is absent, null, or is not an array.
      */
     public function requireReader(int|string $key, ?ValueType $type = null): self
@@ -837,7 +844,7 @@ final readonly class ArrayReader
      * Reads a required list of arrays as readers, preserving their paths and source.
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the list.
-     * @return list<self>
+     * @return list<self<array-key>>
      * @throws ArrayException If the key is absent, null, or is not a list of arrays.
      */
     public function requireReaders(int|string $key, ?ValueType $type = null): array
@@ -882,7 +889,7 @@ final readonly class ArrayReader
      * Reads an array of arrays as readers, preserving every key and error path.
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the collection.
-     * @return array<array-key, self>|null
+     * @return array<array-key, self<array-key>>|null
      * @throws ArrayException If the value is not an array of arrays.
      */
     public function getArrayReaders(int|string $key, ?ValueType $type = null): ?array
@@ -896,7 +903,7 @@ final readonly class ArrayReader
      * Reads a required array of arrays as readers, preserving keys and paths.
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of each array in the collection.
-     * @return array<array-key, self>
+     * @return array<array-key, self<array-key>>
      * @throws ArrayException If the key is absent, null, or is not an array of arrays.
      */
     public function requireArrayReaders(int|string $key, ?ValueType $type = null): array
@@ -911,7 +918,7 @@ final readonly class ArrayReader
      * collection returns null. The optional type validates or converts each row.
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of each row.
-     * @return array<int, self>|null
+     * @return array<int, self<array-key>>|null
      * @throws ArrayException If the collection or a row has an invalid type.
      */
     public function getIndexedReaders(int|string $key, ?ValueType $type = null): ?array
@@ -925,7 +932,7 @@ final readonly class ArrayReader
      * Reads a required integer-keyed collection as readers (see getIndexedReaders()).
      *
      * @param ValueType<array<array-key, mixed>>|null $type Type of each row.
-     * @return array<int, self>
+     * @return array<int, self<array-key>>
      * @throws ArrayException If the collection is absent, null or has an invalid type.
      */
     public function requireIndexedReaders(int|string $key, ?ValueType $type = null): array
@@ -936,9 +943,9 @@ final readonly class ArrayReader
     /**
      * Creates readers for a collection already validated by ValueType.
      *
-     * @template K of array-key
-     * @param array<K, array<array-key, mixed>> $items
-     * @return array<K, self>
+     * @template A of array-key
+     * @param array<A, array<array-key, mixed>> $items
+     * @return array<A, self<array-key>>
      */
     private function createArrayReaders(array $items, int|string $key): array
     {

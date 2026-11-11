@@ -34,13 +34,14 @@ final class ArrayDuplicates
      * An item that is an object is read through its public properties, and the
      * values that are compared must be serializable.
      *
-     * @param array<array-key, mixed> $items The list. Its keys are the ones that
+     * @template K of array-key
+     * @param array<K, mixed> $items The list. Its keys are the ones that
      * are reported.
      * @param array<int, int|string|array<int, int|string>> $paths The paths of
      * the values that identify an item.
      * @param (callable(mixed): mixed)|null $normalize Applied to each value
      * that is read, before comparing it.
-     * @return list<array{index: int|string, first: int|string, value: list<mixed>}>
+     * @return list<array{index: K, first: K, value: list<mixed>}>
      * The repeated items in the order of the list: the key of the item, the key
      * of the first item that has those values and the values that were read from
      * the repeated one (before normalizing them).
@@ -56,10 +57,11 @@ final class ArrayDuplicates
     /**
      * Finds the first item that repeats the values of an earlier one.
      *
-     * @param array<array-key, mixed> $items
+     * @template K of array-key
+     * @param array<K, mixed> $items
      * @param array<int, int|string|array<int, int|string>> $paths
      * @param (callable(mixed): mixed)|null $normalize
-     * @return array{index: int|string, first: int|string, value: list<mixed>}|null
+     * @return array{index: K, first: K, value: list<mixed>}|null
      * `null` if there is none.
      * @throws ArrayException As {@see find()}.
      */
@@ -119,10 +121,11 @@ final class ArrayDuplicates
     /**
      * Goes through the list and gives each item that repeats an earlier one.
      *
-     * @param array<array-key, mixed> $items
+     * @template K of array-key
+     * @param array<K, mixed> $items
      * @param array<array-key, mixed> $paths
      * @param (callable(mixed): mixed)|null $normalize
-     * @return Generator<int, array{index: int|string, first: int|string, value: list<mixed>}>
+     * @return Generator<int, array{index: K, first: K, value: list<mixed>}>
      */
     private static function scan(array $items, array $paths, ?callable $normalize): Generator
     {
@@ -135,7 +138,7 @@ final class ArrayDuplicates
             ]);
         }
 
-        /** @var array<string, int|string> $seen */
+        /** @var array<string, K> $seen */
         $seen = [];
         foreach ($items as $index => $item) {
             $values = $readPaths === [] ? [$item] : self::read($index, $item, $readPaths);

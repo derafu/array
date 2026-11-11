@@ -22,9 +22,10 @@ final class ArrayTable
     /**
      * Ensure an ID attribute in each array element using the array key.
      *
-     * @param array<int|string, array<array-key, mixed>> $data Array of arrays.
+     * @template K of array-key
+     * @param array<K, array<array-key, mixed>> $data Array of arrays.
      * @param string $idField Name of the field to store the ID.
-     * @return array<int|string, array<array-key, mixed>> The modified array with IDs added.
+     * @return array<K, array<array-key, mixed>> The modified array with IDs added.
      */
     public static function withKeyColumn(array $data, string $idField): array
     {
@@ -63,9 +64,11 @@ final class ArrayTable
      * value `null`. The number of rows is the one of the longest group that is
      * there: if none of the keys is there, there are no rows.
      *
-     * @param array<array-key, array<int, mixed>> $array The grouped array to transform.
+     * @template K of array-key
+     * @template V = mixed
+     * @param array<K, array<int, V>> $array The grouped array to transform.
      * @param list<array-key>|null $keys Specific keys to extract (null for all keys).
-     * @return list<array<array-key, mixed>> The resulting table array.
+     * @return ($keys is null ? list<array<K, V|null>> : list<array<array-key, V|null>>) The resulting table array.
      */
     public static function columnsToRows(array $array, ?array $keys = null): array
     {

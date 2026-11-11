@@ -157,10 +157,11 @@ final class ArrayPath
      * If any key of the path does not exist, or a level of the path is not an
      * array, the array is returned as it is.
      *
-     * @param array<array-key, mixed> $array The array.
+     * @template K of array-key
+     * @param array<K, mixed> $array The array.
      * @param string|non-empty-list<string> $path Dot notation path ("a.b.c") or
      * the list of keys.
-     * @return array<array-key, mixed> The array.
+     * @return array<K, mixed> The array.
      */
     public static function wrap(array $array, string|array $path): array
     {

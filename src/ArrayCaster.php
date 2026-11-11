@@ -25,10 +25,11 @@ final class ArrayCaster
     /**
      * Parses array leaves using ValueParser's options and defaults.
      *
-     * @param array<array-key, mixed> $array The array to process.
+     * @template K of array-key
+     * @param array<K, mixed> $array The array to process.
      * @param bool $preserveNumericFormat Preserve numeric spelling as defined by ValueParser.
      * @param bool $preserveNumericPrecision Preserve numeric precision as defined by ValueParser.
-     * @return array<array-key, mixed> Parsed values with their original keys.
+     * @return array<K, mixed> Parsed values with their original keys.
      * @throws ValueConversionException If a Stringable value cannot be converted to text.
      */
     public static function cast(
@@ -48,9 +49,10 @@ final class ArrayCaster
      *
      * The comparison is strict: `0` is not `false` and `'0'` is not `''`.
      *
-     * @param array<array-key, mixed> $array The array to process.
+     * @template K of array-key
+     * @param array<K, mixed> $array The array to process.
      * @param non-empty-list<bool|int|float|string> $values The values that become `null`.
-     * @return array<array-key, mixed> The array, with its original keys.
+     * @return array<K, mixed> The array, with its original keys.
      */
     public static function nullify(array $array, array $values): array
     {
@@ -71,8 +73,9 @@ final class ArrayCaster
      * The arrays are traversed, but an array is blank only when it is empty: one
      * that has only blank values is kept, with those values replaced by `null`.
      *
-     * @param array<array-key, mixed> $array The array to process.
-     * @return array<array-key, mixed> The array, with its original keys.
+     * @template K of array-key
+     * @param array<K, mixed> $array The array to process.
+     * @return array<K, mixed> The array, with its original keys.
      */
     public static function nullifyBlank(array $array): array
     {
