@@ -190,4 +190,16 @@ final class ArrayWriterTest extends TestCase
             );
         }
     }
+
+    public function testAppendToAValueThatIsNotAListSaysTheWholePath(): void
+    {
+        $data = ['a' => ['b' => ['c' => 'text']]];
+
+        try {
+            ArrayWriter::fromReference($data)->append('a.b.c', 1);
+            $this->fail('A value that is not a list was accepted.');
+        } catch (TypeMismatchException $e) {
+            self::assertSame('The key "a.b.c" must be of type list, string given.', $e->getMessage());
+        }
+    }
 }

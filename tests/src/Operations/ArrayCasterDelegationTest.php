@@ -104,4 +104,16 @@ final class ArrayCasterDelegationTest extends TestCase
             $this->assertSame($cause, $exception->getPrevious());
         }
     }
+
+    /**
+     * Without options, a number whose text loses digits is the number that it
+     * gives, as `ValueParser` does.
+     */
+    public function testWithoutOptionsTheNumbersThatLoseDigitsAreConverted(): void
+    {
+        $this->assertSame(
+            ['precision' => 1.0, 'infinite' => INF],
+            ArrayCaster::cast(['precision' => '1.0000000000000000001', 'infinite' => '1e400'])
+        );
+    }
 }

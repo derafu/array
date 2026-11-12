@@ -324,4 +324,57 @@ final class ArrayDuplicatesTest extends TestCase
         $this->assertSame(['index' => 50000, 'first' => 49999, 'value' => [33, 49999]], $duplicate);
         $this->assertLessThan(2.0, microtime(true) - $start);
     }
+
+    public function testTheMessageWritesTheValuesThatAreTextAsTheyAre(): void
+    {
+        $items = [['Rut' => '11111111-1'], ['Rut' => '11111111-1']];
+
+        try {
+            ArrayDuplicates::assertUnique($items, ['Rut']);
+            $this->fail('A repeated item was accepted.');
+        } catch (DuplicateValueException $e) {
+            $this->assertSame('The item with key 1 repeats the item with key 0 (Rut = 11111111-1).', $e->getMessage());
+        }
+    }
+
+    public function testTheArraysOfTheMessageKeepTheirSlashesAndTheirLetters(): void
+    {
+        $items = [['a' => ['x/y', 'ñ']], ['a' => ['x/y', 'ñ']]];
+
+        try {
+            ArrayDuplicates::assertUnique($items, ['a']);
+            $this->fail('A repeated item was accepted.');
+        } catch (DuplicateValueException $e) {
+            $this->assertSame('The item with key 1 repeats the item with key 0 (a = ["x/y","ñ"]).', $e->getMessage());
+        }
+    }
+
+    public function testAPathThatIsAnIntegerIsTheKeyOfTheItem(): void
+    {
+        $items = [[1, 'a'], [1, 'b'], [2, 'a']];
+
+        $this->assertSame([['index' => 1, 'first' => 0, 'value' => [1]]], ArrayDuplicates::find($items, [0]));
+
+        try {
+            ArrayDuplicates::assertUnique($items, [0]);
+            $this->fail('A repeated item was accepted.');
+        } catch (DuplicateValueException $e) {
+            $this->assertSame('The item with key 1 repeats the item with key 0 (0 = 1).', $e->getMessage());
+        }
+    }
+
+    public function testTheMessageOfAnItemThatCanNotBeReadNamesThePathsOfTheLevels(): void
+    {
+        try {
+            ArrayDuplicates::find([['a' => ['b' => 1]], 5], [['a', 'b']]);
+            $this->fail('An item that can not be read was accepted.');
+        } catch (ArrayException $e) {
+            $this->assertSame('The item with key 1 must be an array or an object to read a.b, int given.', $e->getMessage());
+        }
+    }
+
+    public function testTheDefaultCodeOfTheErrorIsZero(): void
+    {
+        $this->assertSame(0, (new DuplicateValueException('Repeated.', 1, 0, []))->getCode());
+    }
 }

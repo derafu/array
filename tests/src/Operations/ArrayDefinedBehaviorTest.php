@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsArray\Operations;
 
+use Derafu\Array\ArrayCombinations;
 use Derafu\Array\ArrayPath;
 use Derafu\Array\ArrayTable;
 use Derafu\Array\ArrayTree;
@@ -25,6 +26,7 @@ use stdClass;
  * What the methods of Arr do with the values that they can not process, which
  * is what their documentation says.
  */
+#[CoversClass(ArrayCombinations::class)]
 #[CoversClass(ArrayPath::class)]
 #[CoversClass(ArrayTable::class)]
 #[CoversClass(ArrayTree::class)]
@@ -192,5 +194,40 @@ final class ArrayDefinedBehaviorTest extends TestCase
         $this->assertSame('d', ArrayPath::get($array, 'a.b.c', 'd'), 'A level that is not an array has no keys.');
         $this->assertSame('d', ArrayPath::get($array, 'text.0', 'd'), 'A string is not an array.');
         $this->assertSame('d', ArrayPath::get($array, 'x.y.z', 'd'));
+    }
+
+    #[Test]
+    public function shouldKeepGoingAfterAnItemWithoutTheFieldOfTheParentInToTree(): void
+    {
+        $items = [
+            1 => ['name' => 'no parent field'],
+            2 => ['name' => 'root', 'parent' => null],
+        ];
+
+        $this->assertSame(
+            [2 => ['name' => 'root', 'children' => []]],
+            ArrayTree::fromRows($items, 'parent', 'children')
+        );
+    }
+
+    #[Test]
+    public function shouldKeepGoingAfterAnItemThatCanNotBeListedInToOutline(): void
+    {
+        $tree = [
+            1 => 'not an item',
+            2 => ['other' => 'no name'],
+            3 => ['name' => 'listed'],
+        ];
+
+        $this->assertSame(
+            [3 => ['name' => 'listed', 'level' => 0]],
+            ArrayTree::toOutline($tree, 'name', 'children')
+        );
+    }
+
+    #[Test]
+    public function shouldGiveTheEmptySubsetOnceWhenTheMinimumLengthIsZero(): void
+    {
+        $this->assertSame([[], [1], [2], [1, 2]], ArrayCombinations::subsets([1, 2], 0));
     }
 }
